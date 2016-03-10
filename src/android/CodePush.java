@@ -326,9 +326,16 @@ public class CodePush extends CordovaPlugin {
 
     private File getStartPageForPackage(String packageLocation) {
         if (packageLocation != null) {
-            File startPage = new File(this.cordova.getActivity().getFilesDir() + packageLocation, "www/" + getConfigStartPageName());
+            String startPageFileName = getConfigStartPageName();
+            File startPage = new File(this.cordova.getActivity().getFilesDir() + packageLocation, "www/" + startPageFileName);
             if (startPage.exists()) {
                 return startPage;
+            } else if (startPageFileName.contains("http://localhost/")) {
+                startPageFileName = startPageFileName.replaceFirst("http://localhost/", "");
+                startPage = new File(this.cordova.getActivity().getFilesDir() + packageLocation, "www/" + startPageFileName);
+                if (startPage.exists()) {
+                    return startPage;
+                }
             }
         }
 
