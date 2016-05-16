@@ -65,7 +65,13 @@ var RemotePackage = (function (_super) {
                         downloadProgress(dp);
                     }
                 };
-                this.currentFileTransfer.download(this.downloadUrl, cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName, downloadSuccess, downloadError, true);
+                var filePath = cordova.file.dataDirectory + LocalPackage.DownloadDir + "/" + LocalPackage.PackageUpdateFileName;
+                var doDownload = function() {
+                    _this.currentFileTransfer.download(_this.downloadUrl, filePath, downloadSuccess, downloadError, true);
+                };
+                window.resolveLocalFileSystemURL(filePath, function(fileEntry) {
+                    fileEntry.remove(doDownload)
+                }, doDownload);
             }
         }
         catch (e) {
