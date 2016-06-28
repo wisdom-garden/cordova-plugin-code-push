@@ -9,6 +9,7 @@ This plugin provides client-side integration for the [CodePush service](http://c
 * [Releasing Updates](#releasing-updates)
 * [API Reference](#api-reference)
 * [PhoneGap Build](#phonegap-build)
+* [Example Apps](#example-apps)
 
 ## How does it work?
 
@@ -133,6 +134,8 @@ code-push release-cordova MyApp-ios ios
 code-push release-cordova MyApp-Android android
 ```
 
+*NOTE: When releasing updates to CodePush, you do not need to bump your app's version in the `config.xml` file, since you aren't modifying the app store version at all. You only need to bump this version when you upgrade Cordova and/or one of your plugins, at which point, you need to release an update to the native store(s). CodePush will automatically generate a "label" for each release you make (e.g. `v3`) in order to help identify it within your release history.*
+
 The `release-cordova` command enables such a simple workflow because it understands the standard layout of a Cordova app, and therefore, can generate your update and know exactly which files to upload. Additionally, in order to support flexible release strategies, the `release-cordova` command exposes numerous optional parameters that let you customize how the update should be distributed to your end users (e.g. Which binary versions are compatible with it? Should the release be viewed as mandatory?).  
 
 ```shell
@@ -164,6 +167,8 @@ The CodePush API is exposed to your app via the global `codePush` object, which 
 - __[checkForUpdate](#codepushcheckforupdate)__: Asks the CodePush service whether the configured app deployment has an update available.
 
 - __[getCurrentPackage](#codepushgetcurrentpackage)__: Retrieves the metadata about the currently installed update (e.g. description, installation time, size).
+
+- __[getPendingPackage](#codepushgetpendingpackage)__: Retrieves the metadata for an update (if one exists) that was downloaded and installed, but hasn't been applied yet via a restart.
 
 - __[notifyApplicationReady](#codepushnotifyapplicationready)__: Notifies the CodePush runtime that an installed update is considered successful. If you are manually checking for and installing updates (i.e. not using the sync method to handle it all for you), then this method **MUST** be called; otherwise CodePush will treat the update as failed and rollback to the previous version when the app next restarts.
 
@@ -224,12 +229,12 @@ codePush.checkForUpdate(function (update) {
 ### codePush.getCurrentPackage
 
 ```javascript
-codePush.getCurrentPackage(onPackageSuccess, onError?);
+codePush.getCurrentPackage(onSuccess, onError?);
 ```
 
 Retrieves the metadata about the currently installed "package" (e.g. description, installation time). This can be useful for scenarios such as displaying a "what's new?" dialog after an update has been applied or checking whether there is a pending update that is waiting to be applied via a resume or restart.
 
-When the update retrieval completes, it will trigger the `onPackageSuccess` callback with one of two possible values:
+When the update retrieval completes, it will trigger the `onSuccess` callback with one of two possible values:
 
 1. `null` if the app is currently running the HTML start page from the binary and not a CodePush update. This occurs in the following scenarios:
 
@@ -241,7 +246,7 @@ When the update retrieval completes, it will trigger the `onPackageSuccess` call
 
 Parameters:
 
-- __onPackageSuccess__: Callback that is invoked upon receiving the metadata about the currently running update. The callback receives a single parameter, which is described above.
+- __onSuccess__: Callback that is invoked upon receiving the metadata about the currently running update. The callback receives a single parameter, which is described above.
 
 - __onError__: Optional callback that is invoked in the event of an error. The callback takes one error parameter, containing the details of the error.
 
@@ -259,6 +264,37 @@ codePush.getCurrentPackage(function (update) {
     // with it upon release, let's show it to the end user
     if (update.isFirstRun && update.description) {
         // Display a "what's new?" modal
+    }
+});
+```
+
+### codePush.getPendingPackage
+
+```javascript
+codePush.getPendingPackage(onSuccess, onError?);
+```
+
+Gets the metadata for the currently pending update (if one exists). An update is considered "pending" if it has been downloaded and installed, but hasn't been applied yet via an app restart. An update could only ever be in this state if   `InstallMode.ON_NEXT_RESTART` or `InstallMode.ON_NEXT_RESUME` were specified upon calling `sync` or `LocalPackage.install`, and the app hasn't yet been restarted or resumed (respectively). This method can be useful if you'd like to determine whether there is a pending update and then prompt the user if they would like to restart now (via `codePush.restartApplication`) in order to apply it.
+
+When the update retrieval completes, it will trigger the `onSuccess` callback with one of two possible values:
+
+1. `null` if the app doesn't currently have a pending update (e.g. the app is already running the latest available version).
+    
+2. A `LocalPackage` instance which represents the metadata for the currently pending CodePush update.
+
+Parameters:
+
+- __onSuccess__: Callback that is invoked upon receiving the metadata about the currently pending update. The callback receives a single parameter, which is described above.
+
+- __onError__: Optional callback that is invoked in the event of an error. The callback takes one error parameter, containing the details of the error.
+
+Example Usage:
+
+```javascript
+codePush.getPendingPackage(function (update) {
+    if (update) {
+        // An update is currently pending, ask the
+        // user if they would like to restart
     }
 });
 ```
@@ -609,3 +645,13 @@ This plugin is compatible with [PhoneGap Build](https://build.phonegap.com), and
 ```xml
 <preference name="android-build-tool" value="gradle" />
 ```
+
+## Example Apps
+
+The Cordova community has graciously created some awesome open source apps that can serve as examples for developers that are getting started. The following is a list of OSS Cordova apps that are also using CodePush, and can therefore be used to see how others are using the service:
+
+* [PGDay CodePush Demo](https://github.com/rangle/pgdays-codepush-demo) - Demo app created by [Rangle.io](http://rangle.io) used for [PhoneGap Day Europe 2016](http://pgday.phonegap.com/eu2016/).
+
+*Note: If you've developed a Cordova app using CodePush, that is also open-source, please let us know. We would love to add it to this list!*
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.

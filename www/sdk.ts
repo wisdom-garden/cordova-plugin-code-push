@@ -44,7 +44,9 @@ class Sdk {
             NativeAppInfo.getServerURL((serverError: Error, serverURL: string) => {
                 NativeAppInfo.getDeploymentKey((depolymentKeyError: Error, deploymentKey: string) => {
                     NativeAppInfo.getApplicationVersion((appVersionError: Error, appVersion: string) => {
-                        if (!serverURL || !appVersion) {
+                        if (!appVersion) {
+                            callback(new Error("Could not get the app version. Please check your config.xml file."), null);
+                        } else if (!serverURL) {
                             callback(new Error("Could not get the CodePush configuration. Please check your config.xml file."), null);
                         } else {
                             Sdk.DefaultConfiguration = {
@@ -77,12 +79,11 @@ class Sdk {
                     callback && callback(error, null);
                 }
                 else {
-                    console.log(`Reporting status: ${status} label: ${pkg && pkg.label} appVersion: ${Sdk.DefaultConfiguration.appVersion} previousLabelOrAppVersion: ${previousLabelOrAppVersion} previousDeploymentKey:${previousDeploymentKey}`);
                     acquisitionManager.reportStatusDeploy(pkg, status, previousLabelOrAppVersion, previousDeploymentKey, callback);
                 }
             }, currentDeploymentKey, "application/json");
         } catch (e) {
-            callback && callback(new Error("An error occured while reporting the deployment status. " + e), null);
+            callback && callback(e, null);
         }
     }
 
